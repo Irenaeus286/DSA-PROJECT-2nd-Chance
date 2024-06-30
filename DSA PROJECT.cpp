@@ -244,15 +244,19 @@ void searchMenu() {
         cin.ignore(); // Ignore newline left in the buffer
         getline(cin, searchName);
 
-        // Binary search by name
-        vector<string>::iterator it = lower_bound(menuItems.begin(), menuItems.end(), searchName, compareByPrice);
-        if (it != menuItems.end() && it->find(searchName) != string::npos) {
-            cout << "\n\t\t\t\t\t\t===============================";
-            cout << "\n\t\t\t\t\t\t   SEARCH RESULTS";
-            cout << "\n\t\t\t\t\t\t===============================" << endl;
-            cout << "\t\t\t\t\t\t" << *it << endl;
-            cout << "\t\t\t\t\t\t===============================" << endl;
-        } else {
+        bool found = false;
+        cout << "\n\t\t\t\t\t\t===============================";
+        cout << "\n\t\t\t\t\t\t   SEARCH RESULTS";
+        cout << "\n\t\t\t\t\t\t===============================" << endl;
+
+        for (size_t i = 0; i < menuItems.size(); ++i) {
+            if (menuItems[i].find(searchName) != string::npos) {
+                cout << "\t\t\t\t\t\t " << menuItems[i] << endl;
+                found = true;
+            }
+        }
+
+        if (!found) {
             cout << "\n\t\t\t\t\t\t===============================";
             cout << "\n\t\t\t\t\t\t   NO MATCH FOUND";
             cout << "\n\t\t\t\t\t\t===============================" << endl;
@@ -270,12 +274,10 @@ void searchMenu() {
         cout << "\n\t\t\t\t\t\t===============================";
         cout << "\n\t\t\t\t\t\t   SEARCH RESULTS";
         cout << "\n\t\t\t\t\t\t===============================" << endl;
-        cout << "\t\t\t\t\t\t" << menuItems[searchNumber - 1] << endl;
-        cout << "\t\t\t\t\t\t===============================" << endl;
+        cout << "\t\t\t\t\t\t[" << searchNumber << "] " << menuItems[searchNumber - 1] << endl;
     }
     system("PAUSE");
 }
-
 
 class two : public one {
 protected:
