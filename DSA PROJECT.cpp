@@ -64,18 +64,18 @@ void editOrder() {
     vector<Order> orders;
     string line;
     while (getline(read, line)) {
-        if (line.find("YOU ORDER") != string::npos) {
+        if (line.find("YOU ORDERED") != string::npos) {
             Order order;
-            size_t pos = line.find(":");
-            order.fruit = line.substr(9, pos - 9 - 1); // Extract fruit name
+            size_t pos = line.find(" : ");
+            order.fruit = line.substr(12, pos - 12); // Extract fruit name
             
             getline(read, line); // Read quantity line
-            pos = line.find(":");
+            pos = line.find(": ");
             order.quantity = atoi(line.substr(pos + 2).c_str()); // Convert string to integer
             
             getline(read, line); // Read total cost line
-            pos = line.find(":");
-            order.totalCost = atof(line.substr(pos + 2).c_str()); // Convert string to double
+            pos = line.find(": RM ");
+            order.totalCost = atof(line.substr(pos + 5).c_str()); // Convert string to double
             
             orders.push_back(order);
         }
@@ -93,7 +93,7 @@ void editOrder() {
     cout << "\n\t\t\t\t\t\t  CURRENT ORDERS";
     cout << "\n\t\t\t\t\t\t==============================\n";
     for (size_t i = 0; i < orders.size(); ++i) {
-        cout << "\t\t\t\t\t\t[" << i + 1 << "] " << orders[i].fruit << ": Quantity = " << orders[i].quantity << ", Total Cost = RM." << orders[i].totalCost << endl;
+        cout << "\t\t\t\t\t\t[" << i + 1 << "] " << orders[i].fruit << ": Quantity = " << orders[i].quantity << ", Total Cost = RM " << orders[i].totalCost << endl;
     }
 
     int choice;
@@ -139,9 +139,9 @@ void editOrder() {
     }
 
     for (size_t i = 0; i < orders.size(); ++i) {
-        write << "YOU ORDER " << orders[i].fruit << " : " << orders[i].totalCost / orders[i].quantity << " \n";
-        write << "NUMBER OF FRUITS IS : " << orders[i].quantity << "\n";
-        write << "TOTAL COST IS : " << orders[i].totalCost << "\n\n";
+        write << "YOU ORDERED " << orders[i].fruit << " : RM " << orders[i].totalCost / orders[i].quantity << " \n";
+        write << "NUMBER OF FRUITS : " << orders[i].quantity << "\n";
+        write << "TOTAL COST : RM " << orders[i].totalCost << "\n\n";
     }
     write.close();
 
@@ -166,7 +166,7 @@ void sortMenu() {
     read.close();
 
     int sortChoice;
-    cout << "\n\t[1] Sort by Number \t[2] Sort by Price \n\tEnter your choice (1-2): ";
+    cout << "\n\t[1] Sort by Alphabetical \t[2] Sort by Price \n\tEnter your choice (1-2): ";
     while (!(cin >> sortChoice) || sortChoice < 1 || sortChoice > 2) {
         cin.clear(); // Clear the error flag set by invalid input
         cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the invalid input
@@ -174,14 +174,32 @@ void sortMenu() {
     }
 
     if (sortChoice == 1) {
-        // Sort by number
+        // Sort by alphabetical order using insertion sort
         for (size_t i = 1; i < menuItems.size(); ++i) {
             string key = menuItems[i];
-            int keyNumber = atoi(key.substr(1, key.find(']') - 1).c_str());
+            int j = i - 1;
+
+            while (j >= 0 && menuItems[j] > key) {
+                menuItems[j + 1] = menuItems[j];
+                j = j - 1;
+            }
+            menuItems[j + 1] = key;
+        }
+    } else if (sortChoice == 2) {
+        // Sort by price using insertion sort
+        for (size_t i = 1; i < menuItems.size(); ++i) {
+            string key = menuItems[i];
+            size_t startKey = key.find("RM ") + 3;
+            size_t endKey = key.find(")", startKey);
+            double keyPrice = atof(key.substr(startKey, endKey - startKey).c_str());
+
             int j = i - 1;
             while (j >= 0) {
-                int currentNumber = atoi(menuItems[j].substr(1, menuItems[j].find(']') - 1).c_str());
-                if (currentNumber > keyNumber) {
+                size_t startCurrent = menuItems[j].find("RM ") + 3;
+                size_t endCurrent = menuItems[j].find(")", startCurrent);
+                double currentPrice = atof(menuItems[j].substr(startCurrent, endCurrent - startCurrent).c_str());
+
+                if (currentPrice > keyPrice) {
                     menuItems[j + 1] = menuItems[j];
                     j = j - 1;
                 } else {
@@ -189,23 +207,6 @@ void sortMenu() {
                 }
             }
             menuItems[j + 1] = key;
-        }
-    } else if (sortChoice == 2) {
-        // Sort by price using a basic sorting algorithm
-        for (size_t i = 0; i < menuItems.size(); ++i) {
-            for (size_t j = i + 1; j < menuItems.size(); ++j) {
-                size_t startA = menuItems[i].find("RM.") + 3;
-                size_t endA = menuItems[i].find(")", startA);
-                double priceA = atof(menuItems[i].substr(startA, endA - startA).c_str());
-                
-                size_t startB = menuItems[j].find("RM.") + 3;
-                size_t endB = menuItems[j].find(")", startB);
-                double priceB = atof(menuItems[j].substr(startB, endB - startB).c_str());
-
-                if (priceA > priceB) {
-                    swap(menuItems[i], menuItems[j]);
-                }
-            }
         }
     }
 
@@ -355,124 +356,96 @@ public:
 
 private:
     void placeOrder() {
-    	ofstream write("order.txt", ios::app); // Open file in append mode
+    ifstream menuFile("menu.txt");
+    if (!menuFile) {
+        cout << "Unable to open file 'menu.txt'!" << endl;
+        return;
+    }
+
+    // Read fruits and prices from menu.txt
+    vector<string> fruitNames;
+    vector<double> fruitPrices;
+    string line;
+
+    while (getline(menuFile, line)) {
+        size_t pricePos = line.find("(RM ");
+        if (pricePos != string::npos) {
+            string name = line.substr(0, pricePos - 1);
+            string priceStr = line.substr(pricePos + 4, line.find(")") - pricePos - 4);
+            double price = atof(priceStr.c_str()); // Use atof to handle decimals correctly
+            fruitNames.push_back(name);
+            fruitPrices.push_back(price);
+        }
+    }
+    menuFile.close();
+
+    ofstream write("order.txt", ios::app); // Open file in append mode
     if (!write) {
         cout << "Unable to open file 'order.txt'!" << endl;
         return;
     }
-        do {
+
+    double totalCost = 0;
+    string continueOrder;
+
+    do {
+        system("cls");
+        displayAvailableFruits();
+
+        int ch = 0;
+        cin.clear();
+        cout << "\n\n\tENTER YOUR ORDER INDEX: ";
+        while (!(cin >> ch) || ch < 1 || ch > fruitNames.size()) {
+            cin.clear(); // Clear the error flag set by invalid input
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the invalid input
             system("cls");
-            menu1();
+            displayAvailableFruits();
+            cout << "\nInvalid input! Please enter a valid index: ";
+        }
+        
+        
 
-            cout << "\n\n\tENTER YOUR ORDER (1-15): ";
-            while (!(cin >> ch) || ch < 1 || ch > 15) {
-                cin.clear(); // Clear the error flag set by invalid input
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the invalid input
-                system("cls");
-                menu1();
-                cout << "\nInvalid input! Please enter a number between 1 and 15: ";
-            }
+        int fruits = 0;
+        cout << "\n\n\tHOW MANY FRUITS YOU WANT: ";
+        while (!(cin >> fruits) || fruits < 1) {
+            cin.clear(); // Clear the error flag set by invalid input
+            cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the invalid input
+            cout << "\nInvalid input! Please enter a valid number of fruits: ";
+        }
 
-            cout << "\n\n\tHOW MANY FRUITS YOU WANT: ";
-            while (!(cin >> fruits) || fruits < 1) {
-                cin.clear(); // Clear the error flag set by invalid input
-                cin.ignore(numeric_limits<streamsize>::max(), '\n'); // Ignore the invalid input
-                cout << "\nInvalid input! Please enter a valid number of fruits: ";
-            }
+        int index = ch - 1; // Adjusting for 0-based index
+        double price = fruitPrices[index];
+        string fruitName = fruitNames[index];
 
-            int price = 0;
-            string fruitName;
-            switch (ch) {
-                case 1:
-                    price = 48;
-                    fruitName = "Banana";
-                    break;
-                case 2:
-                    price = 44;
-                    fruitName = "Watermelon";
-                    break;
-                case 3:
-                    price = 58;
-                    fruitName = "Blueberry";
-                    break;
-                case 4:
-                    price = 52;
-                    fruitName = "Blackberry";
-                    break;
-                case 5:
-                    price = 35;
-                    fruitName = "Cranberry";
-                    break;
-                case 6:
-                    price = 40;
-                    fruitName = "Mango";
-                    break;
-                case 7:
-                    price = 42;
-                    fruitName = "Grape fruit";
-                    break;
-                case 8:
-                    price = 54;
-                    fruitName = "Grapes";
-                    break;
-                case 9:
-                    price = 54.8;
-                    fruitName = "Dragon fruit";
-                    break;
-                case 10:
-                    price = 39;
-                    fruitName = "Lemon";
-                    break;
-                case 11:
-                    price = 52.5;
-                    fruitName = "Longon";
-                    break;
-                case 12:
-                    price = 42.5;
-                    fruitName = "Mangosteen";
-                    break;
-                case 13:
-                    price = 33.5;
-                    fruitName = "Orange";
-                    break;
-                case 14:
-                    price = 32.4;
-                    fruitName = "Papaya";
-                    break;
-                case 15:
-                    price = 36;
-                    fruitName = "Pineapple";
-                    break;
-            }
+        totalCost += price * fruits;
 
-            s += price * fruits;
+        // Write order details to order.txt
+        write << "YOU ORDERED " << fruitName << " : RM " << price << " \n";
+        write << "NUMBER OF FRUITS : " << fruits << "\n";
+        write << "TOTAL COST : RM " << price * fruits << "\n\n";
 
-            // Write order details to order.txt
-            write << "YOU ORDER " << fruitName << " : " << price << " \n";
-        write << "NUMBER OF FRUITS IS : " << fruits << "\n";
-        write << "TOTAL COST IS : " << price * fruits << "\n\n";
-
-        cout << "\n\n\n\tYOU ORDER " << fruitName << " \n\tYOUR ORDER SUCCESSFULLY SAVED " << endl;
+        cout << "\n\n\n\tYOU ORDERED " << fruitName << " \n\tYOUR ORDER HAS BEEN SUCCESSFULLY SAVED " << endl;
 
         // Prompt to add more fruits
         while (true) {
             cout << "\n\tDO YOU WANT TO ADD MORE FRUITS? (y/n): ";
-            cin >> ye;
-            if (ye == "y" || ye == "Y") {
+            cin >> continueOrder;
+            if (continueOrder == "y" || continueOrder == "Y") {
                 break; // Continue to enter new order
-            } else if (ye == "n" || ye == "N") {
+            } else if (continueOrder == "n" || continueOrder == "N") {
+                write.close();
                 return; // Exit to action menu
             } else {
                 cout << "\nInvalid input! Please enter 'y' or 'n'.\n";
             }
         }
 
-    } while (ye == "y" || ye == "Y");
+    } while (continueOrder == "y" || continueOrder == "Y");
 
     write.close();
-    }
+}
 
-    void viewTotalCost() {
+void viewTotalCost() {
     ifstream read("order.txt");
     if (!read) {
         cout << "Unable to open file 'order.txt'!" << endl;
@@ -484,7 +457,7 @@ private:
     vector<string> orderDetails; // To store all order details for displaying later
 
     while (getline(read, line)) {
-        if (line.find("YOU ORDER") != string::npos) {
+        if (line.find("YOU ORDERED") != string::npos) {
             // Store the current order line
             string orderLine = line;
 
@@ -502,20 +475,14 @@ private:
             }
             string totalCostLine = line;
 
-            // Extract price from the order line
-            size_t pos = orderLine.find(":");
-            double price = atof(orderLine.substr(pos + 2).c_str()); // Convert string to double
-
-            // Extract quantity from the quantity line
-            pos = quantityLine.find(":");
-            int quantity = atoi(quantityLine.substr(pos + 2).c_str()); // Convert string to integer
-
             // Extract total cost from the total cost line
-            pos = totalCostLine.find(":");
-            double cost = atof(totalCostLine.substr(pos + 2).c_str()); // Convert string to double
-
-            // Add to total
-            total += cost;
+            size_t pos = totalCostLine.find(": RM ");
+            if (pos != string::npos) {
+                double cost = atof(totalCostLine.substr(pos + 5).c_str()); // Use atof to handle decimals correctly
+                total += cost;
+            } else {
+                cout << "Error parsing cost from: " << totalCostLine << endl; // Debug print
+            }
 
             // Store the order details
             orderDetails.push_back(orderLine);
@@ -538,7 +505,7 @@ private:
 
         // Display total cost
         cout << "\n\n\t\t\t\t\t\t==============================";
-        cout << "\n\t\t\t\t\t\tTOTAL BILL IS RM." << total;
+        cout << "\n\t\t\t\t\t\tTOTAL BILL IS RM " << total;
         cout << "\n\t\t\t\t\t\t==============================" << endl;
 
         // Payment confirmation
@@ -557,13 +524,12 @@ private:
                     cout << "\n\t\t\t\t\t\t==============================";
                     cout << "\n\t\t\t\t\t\t   YOUR BILL";
                     cout << "\n\t\t\t\t\t\t==============================\n";
-                    string line;
                     while (getline(orderFile, line)) {
                         cout << "\t\t\t\t\t\t" << line << endl;
                     }
                     cout << "\n\n\t\t\t\t\t\t==============================";
-        			cout << "\n\t\t\t\t\t\tTOTAL BILL IS RM." << total;
-        			cout << "\n\t\t\t\t\t\t==============================" << endl;
+                    cout << "\n\t\t\t\t\t\tTOTAL BILL IS RM " << total;
+                    cout << "\n\t\t\t\t\t\t==============================" << endl;
                     orderFile.close();
                 } else {
                     cout << "\n\t\t\t\t\t\tUnable to open file 'order.txt' for displaying bill." << endl;
@@ -586,8 +552,6 @@ private:
     system("PAUSE");
 }
 
-
-
     void displayAvailableFruits() {
     ifstream menuFile("menu.txt");
     if (!menuFile) {
@@ -596,20 +560,19 @@ private:
     }
 
     string line;
-    string menuContent;
-    while (getline(menuFile, line)) {
-        menuContent += line + "\n\t\t\t\t\t\t";
-    }
-    menuFile.close();
-
-    // Displaying framed menu content
+    int index = 1;
+    vector<string> fruits;
+    system("cls");
     cout << "\n\n\n\t\t\t\t\t\t===============================";
     cout << "\n\t\t\t\t\t\t   AVAILABLE FRUITS MENU";
     cout << "\n\t\t\t\t\t\t===============================" << endl;
-    cout << "\t\t\t\t\t\t" << menuContent;
-    cout << "\n\t\t\t\t\t\t===============================" << endl;
 
-    system("PAUSE");	
+    while (getline(menuFile, line)) {
+        cout << "\t\t\t\t\t\t[" << index++ << "] " << line << endl;
+        fruits.push_back(line);
+    }
+    menuFile.close();
+	system("pause");	
 }
 
 
