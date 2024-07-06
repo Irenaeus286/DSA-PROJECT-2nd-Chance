@@ -26,6 +26,11 @@ struct Order {
     double totalCost;
 };
 
+struct Fruit {
+    string name;
+    double price;
+};
+
 bool compareByPrice(const string &a, const string &b) {
     size_t posA = a.find_first_of('(');
     size_t posB = b.find_first_of('(');
@@ -796,7 +801,23 @@ public:
     cin >> staffId;
     cout << "\t\t\t\t\t\t\t---------------------";
 
-    if (staffId != "007") {
+    ifstream staffFile("staff.txt");
+    if (!staffFile) {
+        cout << "\nUnable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    string storedId, storedPwd;
+    bool validId = false;
+    while (staffFile >> storedId >> storedPwd) {
+        if (staffId == storedId) {
+            validId = true;
+            break;
+        }
+    }
+    staffFile.close();
+
+    if (!validId) {
         cout << "\nIncorrect ID. Access Denied.\n";
         return;
     }
@@ -805,14 +826,14 @@ public:
     staffPwd = "";
     char c;
 p:
-    c = getch();
-    cout << "*"; //for printing * instead for password
+    c = _getch();  // Use _getch() for Windows, change to getch() for other platforms if needed
+    cout << "*"; // for printing * instead for password
     if (c != 13) {
-        staffPwd = staffPwd + c; //for concatenating the string
+        staffPwd = staffPwd + c; // for concatenating the string
         goto p;
     }
 
-    if (staffPwd == "2806") {
+    if (staffPwd == storedPwd) {
         cout << "\n\n\t\t\t\t\t\t\tAccess Granted. Welcome to the staff interface\n\n\n";
         system("PAUSE");
         system("CLS");
@@ -823,6 +844,7 @@ p:
 }
 
 void staffInterface() {
+	system("CLS");
     int choice;
     do {
         cout << "\n\n\t\t\t\t\t\t===========================";
@@ -830,8 +852,9 @@ void staffInterface() {
         cout << "\n\t\t\t\t\t\t===========================";
         cout << "\n\n\t\t\t\t\t\t1. Display all Available Fruits"; 
         cout << "\n\t\t\t\t\t\t2. View All Active Users"; 
-        cout << "\n\t\t\t\t\t\t3. View Generated Bills";
-        cout << "\n\t\t\t\t\t\t4. View All Orders";
+        cout << "\n\t\t\t\t\t\t3. View All Orders";
+        cout << "\n\t\t\t\t\t\t4. View Staff List"; 
+        cout << "\n\t\t\t\t\t\t5. LogOut";
         cout << "\n\n\t\t\t\t\t\tEnter your choice: ";
         cin >> choice;
 
@@ -843,20 +866,20 @@ void staffInterface() {
                 viewAllActiveUsers();
                 break;
             case 3:
-                viewGeneratedBills();
-                break;
-            case 4:
                 viewAllOrders(); 
+                break;    
+            case 4:
+                viewStaffList();  // New case for viewing staff list
+                break;
+            case 5:
+            	system("cls");
+                cout << "\n\t\t\t\t\t Thank you Admin";
+                total();
                 break;    
             default:
                 cout << "\nInvalid choice. Please try again.\n";
         }
-        
-        
-        system("CLS");
-        
-    } while (choice != 4);
-    
+    } while (choice != 5);
 }
 
 void viewAllOrders() {
@@ -868,27 +891,18 @@ void viewAllOrders() {
     }
 
     string line;
-    cout << "\n\n\t\t\t\t\t\t======== ALL ORDERS ========\n";
+    system("CLS");
+    cout << "\n\n\n\t\t\t\t\t\t===============================";
+    cout << "\n\t\t\t\t\t\t\t   ALL ORDERS";
+    cout << "\n\t\t\t\t\t\t===============================" << endl;
     while (getline(read, line)) {
         cout << line << endl;
     }
     read.close();
-}
-
-void viewGeneratedBills() {
-    ifstream read;
-    read.open("bills.txt");
-    if (!read) {
-        cout << "File cannot open" << endl;
-        exit(-1);
-    }
-
-    string line;
-    cout << "\n\n\t\t\t\t\t\t======== GENERATED BILLS ========\n";
-    while (getline(read, line)) {
-        cout << line << endl;
-    }
-    read.close();
+    
+    system("PAUSE");
+    system("CLS");
+    staffInterface();
 }
    
    void viewAllActiveUsers() {
@@ -899,6 +913,7 @@ void viewGeneratedBills() {
     }
 
     string line;
+    system("CLS");
     string usersContent;
     while (getline(usersFile, line)) {
         usersContent += line + "\n\t\t\t\t\t\t";
@@ -913,14 +928,248 @@ void viewGeneratedBills() {
     cout << "\t\t\t\t\t\t" << usersContent;
     cout << "\n\t\t\t\t\t\t===============================" << endl;
     
-    cout << "\n\n\t\t\t\t\t\t\t     \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
     
-    
-    
-   
+}
+
+
+void viewStaffList() {
+    ifstream staffFile("staff.txt");
+    if (!staffFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    string line;
+    system("CLS");
+    cout << "\n\n\t\t\t\t\t\t======== STAFF LIST ========\n";
+    cout << "\t\t\t\t\t\tSTAFF ID / PASSWORD " << endl;
+    while (getline(staffFile, line)) {
+        cout << "\t\t\t\t\t\t" << line << endl;
+    }
+    cout << "\t\t\t\t\t\t===========================\n";
+    staffFile.close();
+
+    int choice;
+    cout << "\n\n\t\t\t\t\t\t1. Add New Staff";
+    cout << "\n\t\t\t\t\t\t2. Edit Staff";
+    cout << "\n\t\t\t\t\t\t3. Back to Main Menu";
+    cout << "\n\n\t\t\t\t\t\tEnter your choice: ";
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            addNewStaff();
+            break;
+        case 2:
+            editStaff();
+            break;
+        case 3:
+            system("CLS");
+            staffInterface();
+            break;
+        default:
+            cout << "\nInvalid choice. Please try again.\n";
+            system("PAUSE");
+            system("CLS");
+            staffInterface();
+    }
+}
+
+void addNewStaff() {
+    string username, password, confirmPassword;
+
+    cout << "\nEnter the username of the new staff: ";
+    cin >> username;
+
+    cout << "Enter the password of the new staff: ";
+    cin >> password;
+
+    cout << "Confirm the password: ";
+    cin >> confirmPassword;
+
+    if (password != confirmPassword) {
+        cout << "\nPasswords do not match. Try again.\n";
+        addNewStaff();
+        return;
+    }
+
+    ofstream staffFile("staff.txt", ios::app);
+    if (!staffFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    staffFile << username << " " << password << endl;
+    staffFile.close();
+
+    cout << "\nNew staff added successfully.\n";
+    system("PAUSE");
+    system("CLS");
+    staffInterface();
+}
+
+void editStaff() {
+    ifstream staffFile("staff.txt");
+    if (!staffFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    string line;
+    vector<string> staffList;
+    cout << "\n\n\t\t\t\t\t\t======== STAFF LIST ========\n";
+    while (getline(staffFile, line)) {
+        cout << "\t\t\t\t\t\t" << line << endl;
+        staffList.push_back(line);
+    }
+    cout << "\t\t\t\t\t\t===========================\n";
+    staffFile.close();
+
+    string username;
+    cout << "\nEnter the username of the staff to edit: ";
+    cin >> username;
+
+    bool found = false;
+    for (vector<string>::iterator it = staffList.begin(); it != staffList.end(); ++it) {
+        if (it->find(username) != string::npos) {
+            found = true;
+            break;
+        }
+    }
+
+    if (!found) {
+        cout << "\nStaff not found.\n";
+        system("PAUSE");
+        system("CLS");
+        staffInterface();
+        return;
+    }
+
+    int choice;
+    cout << "\n1. Edit Staff Password";
+    cout << "\n2. Delete Staff";
+    cout << "\n\nEnter your choice: ";
+    cin >> choice;
+
+    switch (choice) {
+        case 1:
+            editStaffPassword(username);
+            break;
+        case 2:
+            deleteStaff(username);
+            break;
+        default:
+            cout << "\nInvalid choice. Please try again.\n";
+            system("PAUSE");
+            system("CLS");
+            staffInterface();
+    }
+}
+
+void editStaffPassword(const string& username) {
+    ifstream staffFile("staff.txt");
+    if (!staffFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    string line;
+    vector<string> staffList;
+    while (getline(staffFile, line)) {
+        staffList.push_back(line);
+    }
+    staffFile.close();
+
+    string newPassword, confirmPassword;
+    cout << "\nEnter the new password for " << username << ": ";
+    cin >> newPassword;
+
+    cout << "Confirm the new password: ";
+    cin >> confirmPassword;
+
+    if (newPassword != confirmPassword) {
+        cout << "\nPasswords do not match. Try again.\n";
+        editStaffPassword(username);
+        return;
+    }
+
+    for (vector<string>::iterator it = staffList.begin(); it != staffList.end(); ++it) {
+        if (it->find(username) != string::npos) {
+            size_t pos = it->find(' ');
+            if (pos != string::npos) {
+                *it = username + " " + newPassword;
+            }
+            break;
+        }
+    }
+
+    ofstream outFile("staff.txt");
+    if (!outFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+    for (vector<string>::iterator it = staffList.begin(); it != staffList.end(); ++it) {
+        outFile << *it << endl;
+    }
+    outFile.close();
+
+    cout << "\nPassword changed successfully.\n";
+    system("PAUSE");
+    system("CLS");
+    staffInterface();
+}
+
+struct DeleteStaffFunctor {
+    string username;
+    DeleteStaffFunctor(const string& uname) : username(uname) {}
+    bool operator()(const string& staff) const {
+        return staff.find(username) != string::npos;
+    }
+};
+
+void deleteStaff(const string& username) {
+    ifstream staffFile("staff.txt");
+    if (!staffFile) {
+        cout << "Unable to open file 'staff.txt'!" << endl;
+        return;
+    }
+
+    string line;
+    vector<string> staffList;
+    while (getline(staffFile, line)) {
+        staffList.push_back(line);
+    }
+    staffFile.close();
+
+    char confirmation;
+    cout << "\nAre you sure you want to delete the staff " << username << "? (y/n): ";
+    cin >> confirmation;
+
+    if (confirmation == 'y' || confirmation == 'Y') {
+        vector<string>::iterator it = remove_if(staffList.begin(), staffList.end(), DeleteStaffFunctor(username));
+        staffList.erase(it, staffList.end());
+
+        ofstream outFile("staff.txt");
+        if (!outFile) {
+            cout << "Unable to open file 'staff.txt'!" << endl;
+            return;
+        }
+        for (it = staffList.begin(); it != staffList.end(); ++it) {
+            outFile << *it << endl;
+        }
+        outFile.close();
+
+        cout << "\nStaff deleted successfully.\n";
+    } else {
+        cout << "\nDeletion canceled.\n";
+    }
+
+    system("PAUSE");
+    system("CLS");
+    staffInterface();
 }
 
 void displayAllAvailableFruits() {
@@ -931,6 +1180,7 @@ void displayAllAvailableFruits() {
     }
 
     string line;
+    system("CLS");
     int index = 1;
     vector<string> fruits;
     cout << "\n\n\n\t\t\t\t\t\t===============================";
@@ -947,8 +1197,9 @@ void displayAllAvailableFruits() {
     cout << "\n\t\t\t\t\t\t1. Add New Fruits";
     cout << "\n\t\t\t\t\t\t2. Edit Fruit Price";
     cout << "\n\t\t\t\t\t\t3. Delete Fruits";
-    cout << "\n\t\t\t\t\t\t4. Sort Fruits";
+    cout << "\n\t\t\t\t\t\t4. Sort Fruits in Alphabat Order";
     cout << "\n\t\t\t\t\t\t5. Search Fruits";
+    cout << "\n\t\t\t\t\t\t6. Back to Main Menu";
     cout << "\n\n\t\t\t\t\t\tEnter your choice: ";
 
     int choice;  // Declare the variable here
@@ -970,8 +1221,14 @@ void displayAllAvailableFruits() {
         case 5:
             searchFruits();
             break;
+        case 6:
+            system("CLS");
+            staffInterface();
+            break;
         default:
-            cout << "\nInvalid choice. Please try again.\n";
+            system("PAUSE");
+            system("CLS");
+
     }
 
 }
@@ -998,7 +1255,6 @@ void addNewFruits() {
 
     cout << "\nNew fruit added successfully.\n";
 
-    cout << "\n\n\t\t\t\t\t\t\t     \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
@@ -1012,6 +1268,7 @@ void editFruitPrice() {
     }
 
     string line;
+    system("CLS");
     vector<string> lines;
     while (getline(menuFile, line)) {
         lines.push_back(line);
@@ -1052,8 +1309,6 @@ void editFruitPrice() {
     } else {
         cout << "\nFruit not found in the menu.\n";
     }
-
-    cout << "\n\n\t\t\t\t\t\t\t          \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
@@ -1067,6 +1322,7 @@ void deleteFruit() {
     }
 
     string line;
+    system("CLS");
     vector<string> lines;
     while (getline(menuFile, line)) {
         lines.push_back(line);
@@ -1107,8 +1363,6 @@ void deleteFruit() {
     } else {
         cout << "\nFruit not found in the menu.\n";
     }
-
-    cout << "\n\n\t\t\t\t\t\t\t           \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
@@ -1122,6 +1376,7 @@ void sortFruits() {
     }
 
     string line;
+    system("CLS");
     vector<string> lines;
     while (getline(menuFile, line)) {
         lines.push_back(line);
@@ -1149,6 +1404,8 @@ void sortFruits() {
     cout << "\t\t\t\t\t\t===============================" << endl;
 
     system("PAUSE");
+    system("CLS");
+    staffInterface();
 }
 
 void searchFruits() {
@@ -1159,6 +1416,7 @@ void searchFruits() {
     }
 
     string line;
+    system("CLS");
     vector<string> fruits;
     while (getline(menuFile, line)) {
         fruits.push_back(line);
@@ -1169,7 +1427,7 @@ void searchFruits() {
     cout << "\n\t\t\t\t\t\t   SEARCH FRUITS MENU";
     cout << "\n\t\t\t\t\t\t===============================" << endl;
     cout << "\n\t\t\t\t\t\t1. Search by Fruit Name";
-    cout << "\n\t\t\t\t\t\t2. Search by Alphabetical";
+    cout << "\n\t\t\t\t\t\t2. Search by Number";
     cout << "\n\n\t\t\t\t\t\tEnter your choice: ";
 
     int choice;
@@ -1180,13 +1438,11 @@ void searchFruits() {
             searchByName(fruits);
             break;
         case 2:
-            searchByAlphabet(fruits);
+            searchByNumber(fruits);
             break;
         default:
             cout << "\nInvalid choice. Please try again.\n";
     }
-
-    cout << "\n\n\t\t\t\t\t\t\t              \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
@@ -1194,6 +1450,7 @@ void searchFruits() {
 
 void searchByName(vector<string>& fruits) {
     string fruitName;
+    system("CLS");
     cout << "\nEnter the name of the fruit to search: ";
     cin.ignore();
     getline(cin, fruitName);
@@ -1218,32 +1475,21 @@ void searchByName(vector<string>& fruits) {
     if (!found) {
         cout << "\nInvalid Fruit - Not Found\n";
     }
-    
-    cout << "\n\n\t\t\t\t\t\t\t             \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
 }
 
-void searchByAlphabet(vector<string>& fruits) {
-    char alphabet;
-    cout << "\nEnter the alphabet to search (A-Z): ";
-    cin >> alphabet;
-    alphabet = toupper(alphabet);
+void searchByNumber(vector<string>& fruits) {
+    int number;
+    cout << "\nEnter the number to search: ";
+    cin >> number;
 
-    bool found = false;
-    for (size_t i = 0; i < fruits.size(); ++i) {
-        if (toupper(fruits[i][0]) == alphabet) {
-            cout << "\nFruit found: " << fruits[i] << endl;
-            found = true;
-        }
+    if (number > 0 && number <= fruits.size()) {
+        cout << "\nFruit found: " << fruits[number - 1] << endl;
+    } else {
+        cout << "\nInvalid Number - Not Found\n";
     }
-
-    if (!found) {
-        cout << "\nInvalid Fruit - Not Found\n";
-    }
-    
-    cout << "\n\n\t\t\t\t\t\t\t            \n\n\n";
     system("PAUSE");
     system("CLS");
     staffInterface();
@@ -1255,7 +1501,6 @@ string to_string(double value) {
     return os.str();
 }
 
-    
 };
 
 void cls() {
