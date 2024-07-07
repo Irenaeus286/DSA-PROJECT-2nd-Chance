@@ -40,6 +40,41 @@ bool compareByPrice(const string &a, const string &b) {
     return priceA < priceB;
 }
 
+string toLower(const string& str) {
+    string lowerStr;
+    for (size_t i = 0; i < str.length(); ++i) {
+        lowerStr += tolower(str[i]);
+    }
+    return lowerStr;
+}
+
+// Custom comparator for sorting strings
+bool compareStrings(const string& a, const string& b) {
+    return toLower(a) < toLower(b);
+}
+
+// Function to find the first occurrence of a substring using binary search
+int binarySearch(const vector<string>& items, const string& target) {
+    int left = 0, right = items.size() - 1;
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+        string lowerMid = toLower(items[mid]);
+        if (lowerMid.find(target) != string::npos) {
+            // Check for earlier occurrences in the left half
+            if (mid == 0 || toLower(items[mid - 1]).find(target) == string::npos) {
+                return mid;
+            } else {
+                right = mid - 1;
+            }
+        } else if (lowerMid < target) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return -1;
+}
+
 class one {
 public:
     void menu1();
@@ -242,6 +277,9 @@ void searchMenu() {
     }
     read.close();
 
+    // Sort the menu items using the custom comparator
+    sort(menuItems.begin(), menuItems.end(), compareStrings);
+
     int searchChoice;
     cout << "\n\t[1] Search by Fruit Name \t[2] Search by Number \n\tEnter your choice (1-2): ";
     while (!(cin >> searchChoice) || searchChoice < 1 || searchChoice > 2) {
@@ -257,22 +295,30 @@ void searchMenu() {
         cin.ignore(); // Ignore newline left in the buffer
         getline(cin, searchName);
 
-        bool found = false;
+        // Convert search name to lowercase
+        searchName = toLower(searchName);
+
+        int index = binarySearch(menuItems, searchName);
+
         cout << "\n\t\t\t\t\t\t===============================";
         cout << "\n\t\t\t\t\t\t   SEARCH RESULTS";
         cout << "\n\t\t\t\t\t\t===============================" << endl;
 
-        for (size_t i = 0; i < menuItems.size(); ++i) {
-            if (menuItems[i].find(searchName) != string::npos) {
-                cout << "\t\t\t\t\t\t " << menuItems[i] << endl;
-                found = true;
+        if (index != -1) {
+            bool found = false;
+            for (size_t i = index; i < menuItems.size(); ++i) {
+                if (toLower(menuItems[i]).find(searchName) != string::npos) {
+                    cout << "\t\t\t\t\t\t " << menuItems[i] << endl;
+                    found = true;
+                } else {
+                    break; // Stop when the matches end
+                }
             }
-        }
-
-        if (!found) {
-            cout << "\n\t\t\t\t\t\t===============================";
+            if (!found) {
+                cout << "\n\t\t\t\t\t\t   NO MATCH FOUND";
+            }
+        } else {
             cout << "\n\t\t\t\t\t\t   NO MATCH FOUND";
-            cout << "\n\t\t\t\t\t\t===============================" << endl;
         }
     } else if (searchChoice == 2) {
         // Search by number
