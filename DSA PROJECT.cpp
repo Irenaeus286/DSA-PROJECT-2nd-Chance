@@ -16,9 +16,10 @@
 #include <sstream> // for ostringstream
 #include <algorithm> // for sort
 #include <cctype> // for toupper
-
+#include <queue>
 
 using namespace std;
+std::queue<std::string> ordersQueue;
 
 struct Order {
     string fruit;
@@ -846,8 +847,7 @@ void staffInterface() {
 }
 
 void viewAllOrders() {
-    ifstream read;
-    read.open("order.txt");
+    ifstream read("order.txt");
     if (!read) {
         cout << "File cannot open" << endl;
         exit(-1);
@@ -857,16 +857,29 @@ void viewAllOrders() {
     system("CLS");
     cout << "\n\n\n\t\t\t\t\t\t===============================";
     cout << "\n\t\t\t\t\t\t\t   ALL ORDERS";
-    cout << "\n\t\t\t\t\t\t===============================" << endl;
+    cout << "\n\t\t\t\t\t\t===============================\n";
+
+    // Clear the queue before loading new orders
+    while (!ordersQueue.empty()) {
+        ordersQueue.pop();
+    }
+
     while (getline(read, line)) {
-        cout << line << endl;
+        ordersQueue.push(line);
     }
     read.close();
-    
+
+    // Display orders from the queue
+    while (!ordersQueue.empty()) {
+        cout << "\t\t\t\t\t\t" + ordersQueue.front() << endl;
+        ordersQueue.pop();
+    }
+
     system("PAUSE");
     system("CLS");
     staffInterface();
 }
+
    
    void viewAllActiveUsers() {
     ifstream usersFile("users.txt");
